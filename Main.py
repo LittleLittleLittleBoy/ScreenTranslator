@@ -1,4 +1,6 @@
 # encoding:utf-8
+import hashlib
+
 import ImageGrab
 import Image
 import tkinter as tk
@@ -8,18 +10,31 @@ import json
 
 
 def translate(text):
-    values = {'from': 'en', 'to': 'zh',
-              'query': text,
-              'transtype': 'translang', 'simple_means_flag': 3}
-    r = requests.post('https://fanyi.baidu.com/v2transapi', values, timeout=30)
+    url='https://fanyi-api.baidu.com/api/trans/vip/translate'
+    # 这三个属性自己设置 appid和密码可以去百度翻译申请 当月翻译字符数≤2百万，当月免费
+    appid='' #appid
+    salt=123456 #随机数可以自己设置
+    pass='' # 密码
+    md5=hashlib.md5()
+    raw=appid+text+str(salt)+pass
+    print(raw)
+    md5.update(raw.encode('utf-8'))
+    sign=md5.hexdigest()
+    data={
+        'q':text,
+        'from':'en',
+        'to':'zh',
+        'appid':appid,
+        'salt':salt,
+        'sign':sign
+    }
+    r=requests.get(url,data)
     return r.text
 
-
 def getText(text):
-    text = translate(text)
-    text = json.loads(text)
-    return text['trans_result'].get('data')[0].get('dst')
-
+    text=translate(text)
+    text=json.loads(text)
+    return text['trans_result'][0].get('dst')
 
 window = tk.Tk()
 window.title('Translate')
